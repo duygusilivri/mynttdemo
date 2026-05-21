@@ -272,6 +272,25 @@
     }
 
     // ── Drawing ───────────────────────────────────────────────────────────────
+    // Cross-browser rounded rectangle helper (fallback for Safari < 16)
+    function roundedRect(cx, x, y, w, h, r) {
+      if (cx.roundRect) {
+        cx.roundRect(x, y, w, h, r);
+      } else {
+        const minR = Math.min(r, w / 2, h / 2);
+        cx.moveTo(x + minR, y);
+        cx.lineTo(x + w - minR, y);
+        cx.arcTo(x + w, y, x + w, y + minR, minR);
+        cx.lineTo(x + w, y + h - minR);
+        cx.arcTo(x + w, y + h, x + w - minR, y + h, minR);
+        cx.lineTo(x + minR, y + h);
+        cx.arcTo(x, y + h, x, y + h - minR, minR);
+        cx.lineTo(x, y + minR);
+        cx.arcTo(x, y, x + minR, y, minR);
+        cx.closePath();
+      }
+    }
+
     function draw() {
       // Background grid
       ctx.fillStyle = '#16213e';
@@ -317,7 +336,8 @@
         }
         const padding = 1;
         ctx.beginPath();
-        ctx.roundRect(
+        roundedRect(
+          ctx,
           seg.x * CELL + padding,
           seg.y * CELL + padding,
           CELL - padding * 2,
@@ -406,8 +426,8 @@
       const dir = DIRECTIONS[e.key];
       if (!dir) return;
 
-      // Prevent reversing direction
-      if (dir.x === -direction.x && dir.y === -direction.y) return;
+      // Prevent reversing direction (check against nextDirection to handle rapid key presses)
+      if (dir.x === -nextDirection.x && dir.y === -nextDirection.y) return;
 
       nextDirection = dir;
 
